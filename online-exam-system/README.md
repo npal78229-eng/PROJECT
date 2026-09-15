@@ -1,95 +1,72 @@
-# Online Exam System — Day 1 Build
+﻿# Online Exam System (Python + Django)
 
-Day 1 of the sprint schedule: project bootstrap, MySQL-ready config, role-based
-authentication, and every database model/migration for the whole project.
+Academic Mini-Project for B.Tech / BCA / MCA / Diploma in Computer Engineering.  
+**Student:** Nikhil Pal (Enrollment No.: 20240600)  
+**Guide:** Ms. Ragini Sharma  
+**Institution:** Faculty of Engineering and Technology, Mangalayatan University, Beswan  
 
-## ✅ What's done (tested and verified working)
+---
 
-- Django project `examsystem` with 4 apps: `accounts`, `questions`, `exams`, `results`
-- Base template with a Bootstrap 5 navbar shared across all pages
-- Custom `Profile` model (role: `admin` / `student`) linked 1-to-1 to Django's `User`
-- Signal that auto-creates a `Profile` for every new user — superusers become `admin`, everyone else `student`
-- Student self-registration + login/logout, with **role-based redirect** after login
-- All 6 core models, migrated: `Profile`, `Category`, `Question`, `Exam`, `ExamAttempt`, `ExamQuestion`, `Response`, `Result`
-- Everything registered in Django admin
-- MySQL/SQLite toggle via `.env` (`DB_ENGINE=mysql` for real use, `DB_ENGINE=sqlite` for fast local testing with zero DB setup)
+## 🚀 Overview
+The Online Exam System is a web-based examination platform developed using Python, Django, Bootstrap 5, and MySQL/SQLite. It provides automated examination management, question bank management with objective-type MCQs, timed exams with server-side authoritative end timestamps, and role-based portals for administrators/faculty and students.
 
-## Setup on your machine
+## 📁 Repository Structure
+```
+PROJECT/
+└── online-exam-system/
+    ├── accounts/       → Role-based authentication (Admin / Student), Profiles, Dashboards
+    ├── questions/      → Question Bank CRUD, Subject/Category management
+    ├── exams/          → Exam scheduling, Student Start/Resume flow, Attempt tracking
+    ├── results/        → Student responses & evaluation models
+    ├── templates/      → Bootstrap 5 UI templates (responsive navbar, forms, tables)
+    ├── examsystem/     → Core Django settings and URL configurations
+    ├── manage.py
+    ├── requirements.txt
+    └── .env.example
+```
 
-```bash
-# 1. Create & activate a virtual environment
+## 🛠️ Tech Stack
+- **Backend:** Python 3.11+, Django 5.x
+- **Frontend:** HTML5, CSS3, JavaScript, Bootstrap 5 (CDN)
+- **Database:** MySQL (MariaDB) / SQLite toggle for rapid local testing
+- **Architecture:** 3-Tier MVC / MVT architecture
+
+## ⚡ Quick Start Instructions
+
+```powershell
+# 1. Navigate to the project directory
+cd online-exam-system
+
+# 2. (Optional) Create & activate a virtual environment
 python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Mac/Linux
+venv\Scripts\activate
 
-# 2. Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
-# If mysqlclient fails to install on Windows, see the Troubleshooting note below.
 
-# 3. Configure your database
-cp .env.example .env
-# then edit .env with your real MySQL username/password
-# (or set DB_ENGINE=sqlite in .env if you just want to run it immediately with no MySQL setup)
+# 4. Configure environment variables
+# Copy .env.example to .env
+# Set DB_ENGINE=sqlite for instant local testing, or DB_ENGINE=mysql for MySQL
+Copy-Item .env.example .env
 
-# 4. Create the database in MySQL (skip if using sqlite)
-mysql -u root -p -e "CREATE DATABASE exam_system_db;"
-
-# 5. Run migrations
+# 5. Apply database migrations
 python manage.py migrate
 
-# 6. Create your admin account
+# 6. Create an administrator / faculty account
 python manage.py createsuperuser
-# (this account automatically gets role='admin' — see accounts/signals.py)
 
-# 7. Run the server
+# 7. Start the development server
 python manage.py runserver
 ```
 
-Visit `http://127.0.0.1:8000/` — you'll land on the login page. Register a
-student account there, or log in with the superuser you just created to see
-the admin dashboard.
+Open your browser at `http://127.0.0.1:8000/`.
+- **Faculty Login:** Use your superuser account &rarr; redirects to `/dashboard/admin/`.
+- **Student Registration:** Click Register on the login page &rarr; redirects to `/dashboard/student/`.
 
-## Project structure
+---
 
-```
-online-exam-system/
-├── accounts/       → Profile model, auth views, role-based redirect
-├── questions/      → Category, Question (the question bank)
-├── exams/          → Exam, ExamAttempt, ExamQuestion (randomized set per attempt)
-├── results/        → Response, Result
-├── templates/       → base.html + accounts templates
-├── examsystem/      → project settings/urls
-├── .env.example     → copy to .env, fill in real secrets (never commit .env)
-└── requirements.txt
-```
-
-## Design note: why `ExamAttempt` exists
-
-Your synopsis's ER diagram implies students, exams, and responses connect
-directly. I added one extra model, `ExamAttempt`, sitting between `Exam` and
-`Response`. This is what Day 3 (the exam engine) depends on:
-
-- It stores `ends_at` — the **server-side authoritative end time** — so the
-  countdown timer can't be reset by refreshing the page or manipulated via
-  browser dev tools.
-- It's where the **randomly-selected question set gets locked in** once,
-  at the start of the attempt (via `ExamQuestion`), instead of
-  re-randomizing on every page load — which is the #1 bug source in these
-  projects.
-
-This is a small structural upgrade on the original synopsis, not a
-deviation from it — worth a one-line mention in your final report's
-"Implementation" section if you want to show you refined the design.
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| `mysqlclient` fails to install (Windows) | Run `pip install pymysql` instead, then add `import pymysql; pymysql.install_as_MySQLdb()` as the first two lines of `examsystem/__init__.py`. |
-| `Access denied` connecting to MySQL | Check `DB_USER`/`DB_PASSWORD` in `.env`, and that the user has privileges: `GRANT ALL PRIVILEGES ON exam_system_db.* TO 'root'@'localhost';` |
-| Want to just see it running right now, no MySQL setup | Set `DB_ENGINE=sqlite` in `.env`, then `python manage.py migrate` and `runserver`. Switch back to `mysql` before your final submission/testing, since that's what your synopsis specifies. |
-
-## Next: Day 2
-
-Question Bank CRUD, Exam creation/scheduling form, and the Faculty and
-Student dashboards get built out (see the sprint schedule doc).
+## 📅 Sprint Progress
+- [x] **Day 1:** Project bootstrap, 4 apps, full database schema & migrations, role signals, Bootstrap base.
+- [x] **Day 2:** Question Bank CRUD, Category management, Exam scheduling, dynamic Faculty & Student Dashboards, server-authoritative "Start Exam" flow.
+- [ ] **Day 3:** Exam Engine (randomization, question navigation, AJAX response autosave, timer auto-submit, evaluation).
+- [ ] **Day 4:** Security measures, tab-switch monitoring, PDF/Excel export, report analytics.
