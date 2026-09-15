@@ -123,10 +123,11 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Exam Title</th>
-                        <th>Subject</th>
-                        <th>Scheduled Window</th>
-                        <th>Your Status</th>
+                        <th style="width: 25%;">Exam Title</th>
+                        <th style="width: 15%;">Subject</th>
+                        <th style="width: 20%;">Scheduled Window</th>
+                        <th style="width: 15%;">Your Status</th>
+                        <th style="width: 25%;" class="text-end">Score & Scorecard</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -148,6 +149,24 @@
                                 <span class="badge bg-secondary">Closed / Missed</span>
                             {% endif %}
                         </td>
+                        <td class="text-end">
+                            {% if exam.user_attempt and exam.user_attempt.result %}
+                                <div class="mb-1">
+                                    <span class="badge {% if exam.user_attempt.result.passed %}bg-success{% else %}bg-danger{% endif %}">
+                                        Score: {{ exam.user_attempt.result.score }} / {{ exam.user_attempt.result.total_marks }} ({{ exam.user_attempt.result.percentage }}%)
+                                    </span>
+                                </div>
+                                <a href="{% url 'exam_result' exam.user_attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                    View Scorecard &rarr;
+                                </a>
+                            {% elif exam.user_attempt and exam.user_attempt.status == 'submitted' %}
+                                <a href="{% url 'exam_result' exam.user_attempt.id %}" class="btn btn-sm btn-outline-primary">
+                                    View Scorecard &rarr;
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">&mdash;</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -161,4 +180,3 @@
     </div>
 </div>
 {% endblock %}
-

@@ -1,4 +1,4 @@
-﻿from datetime import timedelta
+from datetime import timedelta
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
@@ -186,7 +186,7 @@ class Day2ModulesTestCase(TestCase):
         self.assertEqual(attempt.status, "in_progress")
         self.assertTrue(attempt.ends_at > now)
         self.assertContains(response, f"Attempt #{attempt.id}")
-        self.assertContains(response, "Day 2 Milestone Reached")
+        self.assertContains(response, "Question Palette")
 
         # Starting again resumes the existing attempt without creating a duplicate
         response2 = self.client.get(start_url, follow=True)
@@ -198,5 +198,5 @@ class Day2ModulesTestCase(TestCase):
         attempt.status = "submitted"
         attempt.save()
         response3 = self.client.get(start_url, follow=True)
-        self.assertRedirects(response3, reverse("student_dashboard"))
-        self.assertContains(response3, "already completed and submitted")
+        self.assertRedirects(response3, reverse("exam_result", args=[attempt.id]))
+        self.assertContains(response3, "Examination Scorecard")

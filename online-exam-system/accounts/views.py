@@ -83,7 +83,7 @@ def student_dashboard(request):
     now = timezone.now()
     student_attempts = {
         attempt.exam_id: attempt
-        for attempt in ExamAttempt.objects.filter(student=request.user)
+        for attempt in ExamAttempt.objects.filter(student=request.user).select_related('result')
     }
 
     all_exams = Exam.objects.select_related('category').order_by('scheduled_start')

@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 from . import views
 
 urlpatterns = [
@@ -8,5 +8,7 @@ urlpatterns = [
     path('<int:pk>/edit/', views.exam_edit, name='exam_edit'),
     path('<int:pk>/delete/', views.exam_delete, name='exam_delete'),
     path('<int:pk>/start/', views.start_exam, name='start_exam'),
-    path('attempt/<int:attempt_id>/', views.exam_take_placeholder, name='exam_take_placeholder'),
+    path('attempt/<int:attempt_id>/', views.take_exam, name='take_exam'),
+    path('attempt/<int:attempt_id>/save-response/', views.save_response, name='save_response'),
+    path('attempt/<int:attempt_id>/submit/', views.submit_exam, name='submit_exam'),
 ]

@@ -1,0 +1,396 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ exam.title }} - Active Examination{% endblock %}
+
+{% block content %}
+<!-- Top Sticky Status Bar -->
+<div class="card shadow-sm border-0 mb-4 sticky-top bg-white" style="top: 15px; z-index: 1020;">
+    <div class="card-body py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span class="badge bg-primary me-2">{{ exam.category.name }}</span>
+            <strong class="fs-6">{{ exam.title }}</strong><span class="badge bg-light text-primary border ms-2">Attempt #{{ attempt.id }}</span>
+            <span class="text-muted small ms-2 d-none d-md-inline">&bull; Candidate: {{ request.user.username }}</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-muted small">
+                Answered: <strong id="answered-count-badge" class="text-success">{{ answered_count }}</strong> / {{ total_questions }}
+            </div>
+            <div id="timer-box" class="badge bg-dark fs-6 px-3 py-2 d-flex align-items-center gap-2">
+                <span>&#9201;</span>
+                <span id="timer-display">--:--</span>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#submitModal">
+                Submit Exam
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Area: Active Question Card -->
+    <div class="col-lg-8">
+        {% for q in questions %}
+        <div class="card shadow-sm border-0 question-card {% if not forloop.first %}d-none{% endif %}" id="question-card-{{ forloop.counter0 }}" data-index="{{ forloop.counter0 }}" data-eq-id="{{ q.eq_id }}">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-primary">Question {{ q.order }} of {{ total_questions }}</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary">{{ q.marks }} Mark{{ q.marks|pluralize }}</span>
+                    <span id="save-status-{{ forloop.counter0 }}" class="small text-muted"></span>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <p class="fs-5 fw-semibold mb-4">{{ q.text }}</p>
+
+                <div class="options-container d-flex flex-column gap-3 mb-4">
+                    <!-- Option A -->
+                    <label class="option-item border rounded p-3 d-flex align-items-center gap-3 cursor-pointer {% if q.selected_option == 'a' %}border-primary bg-light{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="option_{{ q.eq_id }}" value="a" class="form-check-input mt-0" {% if q.selected_option == 'a' %}checked{% endif %} onchange="handleOptionSelect({{ forloop.counter0 }}, {{ q.eq_id }}, 'a')">
+                        <div>
+                            <strong class="me-2 text-muted">A.</strong> {{ q.option_a }}
+                        </div>
+                    </label>
+
+                    <!-- Option B -->
+                    <label class="option-item border rounded p-3 d-flex align-items-center gap-3 cursor-pointer {% if q.selected_option == 'b' %}border-primary bg-light{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="option_{{ q.eq_id }}" value="b" class="form-check-input mt-0" {% if q.selected_option == 'b' %}checked{% endif %} onchange="handleOptionSelect({{ forloop.counter0 }}, {{ q.eq_id }}, 'b')">
+                        <div>
+                            <strong class="me-2 text-muted">B.</strong> {{ q.option_b }}
+                        </div>
+                    </label>
+
+                    <!-- Option C -->
+                    <label class="option-item border rounded p-3 d-flex align-items-center gap-3 cursor-pointer {% if q.selected_option == 'c' %}border-primary bg-light{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="option_{{ q.eq_id }}" value="c" class="form-check-input mt-0" {% if q.selected_option == 'c' %}checked{% endif %} onchange="handleOptionSelect({{ forloop.counter0 }}, {{ q.eq_id }}, 'c')">
+                        <div>
+                            <strong class="me-2 text-muted">C.</strong> {{ q.option_c }}
+                        </div>
+                    </label>
+
+                    <!-- Option D -->
+                    <label class="option-item border rounded p-3 d-flex align-items-center gap-3 cursor-pointer {% if q.selected_option == 'd' %}border-primary bg-light{% endif %}" style="cursor: pointer;">
+                        <input type="radio" name="option_{{ q.eq_id }}" value="d" class="form-check-input mt-0" {% if q.selected_option == 'd' %}checked{% endif %} onchange="handleOptionSelect({{ forloop.counter0 }}, {{ q.eq_id }}, 'd')">
+                        <div>
+                            <strong class="me-2 text-muted">D.</strong> {{ q.option_d }}
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-footer bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="prevQuestion()" {% if forloop.first %}disabled{% endif %}>
+                        &larr; Previous
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="toggleReview({{ forloop.counter0 }})">
+                        &#9733; <span id="review-btn-text-{{ forloop.counter0 }}">Mark for Review</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearSelection({{ forloop.counter0 }}, {{ q.eq_id }})">
+                        Clear Selection
+                    </button>
+                </div>
+
+                <div>
+                    {% if forloop.last %}
+                        <button type="button" class="btn btn-success btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#submitModal">
+                            Review & Submit &rarr;
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-primary btn-sm" onclick="nextQuestion()">
+                            Next &rarr;
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Right Area: Question Palette Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 85px;">
+            <div class="card-header bg-white py-3">
+                <h6 class="card-title mb-0 fw-bold">Question Palette</h6>
+            </div>
+            <div class="card-body">
+                <!-- Color Legend -->
+                <div class="d-flex flex-wrap gap-2 mb-3 small text-muted">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="badge bg-success">&nbsp;</span> Answered
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="badge bg-secondary">&nbsp;</span> Not Answered
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="badge bg-warning text-dark">&nbsp;</span> Review
+                    </div>
+                </div>
+
+                <!-- Palette Grid -->
+                <div class="d-flex flex-wrap gap-2" id="palette-grid">
+                    {% for q in questions %}
+                        <button type="button"
+                                id="palette-btn-{{ forloop.counter0 }}"
+                                class="btn btn-sm {% if q.selected_option %}btn-success{% else %}btn-outline-secondary{% endif %} {% if forloop.first %}border-3 border-primary shadow-sm{% endif %}"
+                                style="width: 42px; height: 42px; font-weight: bold;"
+                                onclick="jumpToQuestion({{ forloop.counter0 }})">
+                            {{ q.order }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card-footer bg-white border-0 pt-0 pb-3">
+                <button type="button" class="btn btn-danger w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#submitModal">
+                    Finish & Submit Exam
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Confirmation Modal -->
+<div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="submitModalLabel">Confirm Exam Submission</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p>Are you sure you want to end and submit your examination? Once submitted, your answers cannot be changed.</p>
+
+                <div class="card bg-light border-0 mb-3">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <span class="text-muted small">Total Questions</span>
+                                <h4 class="mb-0">{{ total_questions }}</h4>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Answered Questions</span>
+                                <h4 class="mb-0 text-success" id="modal-answered-count">{{ answered_count }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning small mb-0">
+                    <strong>Note:</strong> Auto-evaluation will grade your responses immediately and generate your scorecard.
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Return to Exam</button>
+                <form method="post" action="{% url 'submit_exam' attempt.id %}" id="submit-exam-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger fw-bold">Yes, Submit Now</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const totalQuestions = {{ total_questions }};
+    const attemptId = {{ attempt.id }};
+    const endsAt = new Date("{{ ends_at_iso }}").getTime();
+    const saveUrl = "{% url 'save_response' attempt.id %}";
+    const csrfToken = "{{ csrf_token }}";
+
+    let currentIndex = 0;
+    let reviewFlags = new Array(totalQuestions).fill(false);
+
+    // Question Navigation
+    function showQuestion(index) {
+        if (index < 0 || index >= totalQuestions) return;
+
+        // Hide current
+        document.getElementById(`question-card-${currentIndex}`).classList.add('d-none');
+        document.getElementById(`palette-btn-${currentIndex}`).classList.remove('border-3', 'border-primary', 'shadow-sm');
+
+        // Show new
+        currentIndex = index;
+        document.getElementById(`question-card-${currentIndex}`).classList.remove('d-none');
+        document.getElementById(`palette-btn-${currentIndex}`).classList.add('border-3', 'border-primary', 'shadow-sm');
+    }
+
+    function nextQuestion() {
+        if (currentIndex < totalQuestions - 1) {
+            showQuestion(currentIndex + 1);
+        }
+    }
+
+    function prevQuestion() {
+        if (currentIndex > 0) {
+            showQuestion(currentIndex - 1);
+        }
+    }
+
+    function jumpToQuestion(index) {
+        showQuestion(index);
+    }
+
+    // Toggle Review Flag
+    function toggleReview(index) {
+        reviewFlags[index] = !reviewFlags[index];
+        const btn = document.getElementById(`palette-btn-${index}`);
+        const textSpan = document.getElementById(`review-btn-text-${index}`);
+
+        if (reviewFlags[index]) {
+            textSpan.textContent = "Unmark Review";
+            btn.classList.remove('btn-success', 'btn-outline-secondary');
+            btn.classList.add('btn-warning', 'text-dark');
+        } else {
+            textSpan.textContent = "Mark for Review";
+            btn.classList.remove('btn-warning', 'text-dark');
+            // Re-check if question is answered
+            const card = document.getElementById(`question-card-${index}`);
+            const selected = card.querySelector('input[type="radio"]:checked');
+            if (selected) {
+                btn.classList.add('btn-success');
+            } else {
+                btn.classList.add('btn-outline-secondary');
+            }
+        }
+    }
+
+    // Option Selection & AJAX Autosave
+    function handleOptionSelect(index, eqId, option) {
+        const card = document.getElementById(`question-card-${index}`);
+        const statusSpan = document.getElementById(`save-status-${index}`);
+
+        // Update styling of option labels
+        card.querySelectorAll('.option-item').forEach(label => {
+            label.classList.remove('border-primary', 'bg-light');
+        });
+        const checkedRadio = card.querySelector(`input[value="${option}"]`);
+        if (checkedRadio) {
+            checkedRadio.closest('.option-item').classList.add('border-primary', 'bg-light');
+        }
+
+        statusSpan.innerHTML = "<span class='text-muted'>Saving...</span>";
+
+        fetch(saveUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                exam_question_id: eqId,
+                selected_option: option,
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                statusSpan.innerHTML = "<span class='text-success'>&#10003; Saved</span>";
+                setTimeout(() => { statusSpan.textContent = ""; }, 2500);
+
+                // Update palette button color
+                const btn = document.getElementById(`palette-btn-${index}`);
+                if (!reviewFlags[index]) {
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.classList.add('btn-success');
+                }
+
+                // Update counts
+                document.getElementById('answered-count-badge').textContent = data.answered_count;
+                document.getElementById('modal-answered-count').textContent = data.answered_count;
+            } else if (data.status === 'expired') {
+                alert("Exam time has expired! Submitting your answers automatically...");
+                document.getElementById('submit-exam-form').submit();
+            }
+        })
+        .catch(err => {
+            statusSpan.innerHTML = "<span class='text-danger'>Save failed! Retrying...</span>";
+        });
+    }
+
+    // Clear Selection
+    function clearSelection(index, eqId) {
+        const card = document.getElementById(`question-card-${index}`);
+        const checkedRadio = card.querySelector('input[type="radio"]:checked');
+        if (!checkedRadio) return;
+
+        checkedRadio.checked = false;
+        card.querySelectorAll('.option-item').forEach(label => {
+            label.classList.remove('border-primary', 'bg-light');
+        });
+
+        const statusSpan = document.getElementById(`save-status-${index}`);
+        statusSpan.innerHTML = "<span class='text-muted'>Clearing...</span>";
+
+        fetch(saveUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({
+                exam_question_id: eqId,
+                selected_option: "",
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                statusSpan.innerHTML = "<span class='text-muted'>Cleared</span>";
+                setTimeout(() => { statusSpan.textContent = ""; }, 2000);
+
+                const btn = document.getElementById(`palette-btn-${index}`);
+                if (!reviewFlags[index]) {
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-secondary');
+                }
+
+                document.getElementById('answered-count-badge').textContent = data.answered_count;
+                document.getElementById('modal-answered-count').textContent = data.answered_count;
+            }
+        });
+    }
+
+    // Countdown Timer Synchronized to Server ends_at
+    function updateTimer() {
+        const now = Date.now();
+        const diff = endsAt - now;
+
+        if (diff <= 0) {
+            document.getElementById('timer-display').textContent = "00:00:00";
+            const timerBox = document.getElementById('timer-box');
+            timerBox.classList.remove('bg-dark', 'bg-warning');
+            timerBox.classList.add('bg-danger');
+
+            // Auto-submit immediately
+            alert("Examination time has expired! Your exam is being automatically submitted for evaluation.");
+            document.getElementById('submit-exam-form').submit();
+            return;
+        }
+
+        const totalSecs = Math.floor(diff / 1000);
+        const hours = Math.floor(totalSecs / 3600);
+        const minutes = Math.floor((totalSecs % 3600) / 60);
+        const seconds = totalSecs % 60;
+
+        const hStr = hours > 0 ? String(hours).padStart(2, '0') + ':' : '';
+        const mStr = String(minutes).padStart(2, '0');
+        const sStr = String(seconds).padStart(2, '0');
+
+        document.getElementById('timer-display').textContent = `${hStr}${mStr}:${sStr}`;
+
+        const timerBox = document.getElementById('timer-box');
+        if (totalSecs <= 60) {
+            timerBox.classList.remove('bg-dark', 'bg-warning');
+            timerBox.classList.add('bg-danger');
+        } else if (totalSecs <= 300) {
+            timerBox.classList.remove('bg-dark', 'bg-danger');
+            timerBox.classList.add('bg-warning', 'text-dark');
+        }
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+</script>
+{% endblock %}

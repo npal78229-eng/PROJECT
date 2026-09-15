@@ -81,11 +81,12 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Student</th>
-                        <th>Started At</th>
-                        <th>Authoritative End Time</th>
-                        <th>Status</th>
-                        <th>Tab Switches</th>
+                        <th style="width: 20%;">Student</th>
+                        <th style="width: 15%;">Started At</th>
+                        <th style="width: 15%;">Submitted At</th>
+                        <th style="width: 15%;">Status</th>
+                        <th style="width: 20%;">Score / Result</th>
+                        <th style="width: 15%;" class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -93,10 +94,16 @@
                     <tr>
                         <td>
                             <strong>{{ a.student.username }}</strong>
-                            <div class="text-muted small">{{ a.student.email }}</div>
+                            <div class="text-muted small">{{ a.student.email|default:"N/A" }}</div>
                         </td>
-                        <td>{{ a.started_at|date:"d M Y, h:i A" }}</td>
-                        <td>{{ a.ends_at|date:"d M Y, h:i A" }}</td>
+                        <td>{{ a.started_at|date:"d M, h:i A" }}</td>
+                        <td>
+                            {% if a.submitted_at %}
+                                {{ a.submitted_at|date:"d M, h:i A" }}
+                            {% else %}
+                                <span class="text-muted small">&mdash;</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if a.status == 'in_progress' %}
                                 <span class="badge bg-warning text-dark">In Progress</span>
@@ -107,7 +114,23 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border">{{ a.tab_switch_count }}</span>
+                            {% if a.result %}
+                                <div>
+                                    <strong>{{ a.result.score }} / {{ a.result.total_marks }}</strong>
+                                    <span class="badge {% if a.result.passed %}bg-success{% else %}bg-danger{% endif %} ms-1">
+                                        {% if a.result.passed %}Passed{% else %}Failed{% endif %} ({{ a.result.percentage }}%)
+                                    </span>
+                                </div>
+                            {% else %}
+                                <span class="text-muted small">Not evaluated</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if a.result or a.status == 'submitted' %}
+                                <a href="{% url 'exam_result' a.id %}" class="btn btn-sm btn-outline-info">View Scorecard</a>
+                            {% else %}
+                                <span class="text-muted small">&mdash;</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -122,4 +145,3 @@
     </div>
 </div>
 {% endblock %}
-
