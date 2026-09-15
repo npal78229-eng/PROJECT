@@ -1,0 +1,299 @@
+﻿{% extends 'base.html' %}
+{% block title %}Faculty Reports & Analytics - Online Exam System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="h3 mb-1">Faculty Reports &amp; Performance Analytics</h2>
+        <p class="text-muted mb-0">Institutional assessment overview &bull; Department of Computer Engineering and Applications</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            Print / Save Report
+        </button>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-primary btn-sm">
+            &larr; Admin Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metrics Overview Cards -->
+<div class="row g-3 mb-4">
+    <!-- Total Exams -->
+    <div class="col-sm-6 col-lg-2">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Total Exams</span>
+                <h3 class="fw-bold mb-0 text-primary">{{ total_exams }}</h3>
+                <small class="text-muted">Scheduled tests</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Attempts -->
+    <div class="col-sm-6 col-lg-2">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Total Attempts</span>
+                <h3 class="fw-bold mb-0 text-dark">{{ total_attempts }}</h3>
+                <small class="text-muted">{{ completed_attempts }} evaluated</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidates -->
+    <div class="col-sm-6 col-lg-2">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Candidates</span>
+                <h3 class="fw-bold mb-0 text-info">{{ unique_candidates }}</h3>
+                <small class="text-muted">Unique students</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Pass Rate -->
+    <div class="col-sm-6 col-lg-2">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Pass Rate</span>
+                <h3 class="fw-bold mb-0 {% if overall_pass_rate >= 50 %}text-success{% else %}text-danger{% endif %}">{{ overall_pass_rate }}%</h3>
+                <small class="text-muted">{{ passed_count }} passed / {{ failed_count }} failed</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Institutional Avg Score -->
+    <div class="col-sm-6 col-lg-2">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Avg Score</span>
+                <h3 class="fw-bold mb-0 text-primary">
+                    {% if overall_agg.avg_percentage %}
+                        {{ overall_agg.avg_percentage|floatformat:1 }}%
+                    {% else %}
+                        0.0%
+                    {% endif %}
+                </h3>
+                <small class="text-muted">Mean percentage</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anti-Cheat Monitor -->
+    <div class="col-sm-6 col-lg-2">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center p-3">
+                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Tab Switches</span>
+                <h3 class="fw-bold mb-0 {% if total_switches > 0 %}text-danger{% else %}text-success{% endif %}">{{ total_switches }}</h3>
+                <small class="text-muted">{{ flagged_attempts_count }} attempt{{ flagged_attempts_count|pluralize }} flagged</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Exam Performance Table -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="card-title mb-0 fw-bold">Examination Performance Analysis</h5>
+        <span class="badge bg-light text-muted border">{{ exam_stats|length }} active examination{{ exam_stats|pluralize }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Exam Title &amp; Category</th>
+                    <th scope="col" class="text-center">Attempts</th>
+                    <th scope="col" class="text-center">Pass Rate</th>
+                    <th scope="col" class="text-center">Avg Score</th>
+                    <th scope="col" class="text-center">High / Low</th>
+                    <th scope="col" class="text-center">Security Violations</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in exam_stats %}
+                <tr>
+                    <td>
+                        <strong class="d-block">{{ item.exam.title }}</strong>
+                        <span class="badge bg-secondary small">{{ item.exam.category.name }}</span>
+                        <span class="text-muted small ms-2">{{ item.exam.total_questions }} Questions &bull; Pass Mark: {{ item.exam.passing_marks }}</span>
+                    </td>
+                    <td class="text-center">
+                        <strong>{{ item.completed_count }}</strong>
+                        {% if item.total_attempts > item.completed_count %}
+                            <small class="text-muted d-block">({{ item.total_attempts }} total)</small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center" style="min-width: 130px;">
+                        {% if item.completed_count > 0 %}
+                            <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                                <span class="fw-bold small {% if item.pass_rate >= 50 %}text-success{% else %}text-danger{% endif %}">{{ item.pass_rate }}%</span>
+                                <small class="text-muted">({{ item.pass_count }}/{{ item.completed_count }})</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar {% if item.pass_rate >= 50 %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ item.pass_rate }}%" aria-valuenow="{{ item.pass_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">No submissions</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.completed_count > 0 %}
+                            <strong>{{ item.avg_score }}</strong> <small class="text-muted">pts</small>
+                            <small class="text-muted d-block">({{ item.avg_percentage }}%)</small>
+                        {% else %}
+                            <span class="text-muted small">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.completed_count > 0 %}
+                            <span class="text-success fw-bold">{{ item.highest_score }}</span> / <span class="text-danger fw-bold">{{ item.lowest_score }}</span>
+                        {% else %}
+                            <span class="text-muted small">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.total_switches > 0 %}
+                            <span class="badge bg-danger">{{ item.total_switches }} switch{{ item.total_switches|pluralize:"es" }}</span>
+                            <small class="text-muted d-block">{{ item.flagged_attempts }} student{{ item.flagged_attempts|pluralize }}</small>
+                        {% else %}
+                            <span class="badge bg-success text-white">Clean (0)</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'exam_detail' item.exam.id %}" class="btn btn-outline-primary btn-sm">
+                            Manage &rarr;
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        No examinations have been scheduled yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Two-Column Row: Subject Breakdown & Recent Attempts -->
+<div class="row g-4">
+    <!-- Left Column: Subject / Category Breakdown -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0 fw-bold">Performance by Subject Category</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-center">Exams</th>
+                            <th class="text-center">Attempts</th>
+                            <th class="text-center">Pass Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in category_stats %}
+                        <tr>
+                            <td>
+                                <strong>{{ cat.category.name }}</strong>
+                            </td>
+                            <td class="text-center">{{ cat.exam_count }}</td>
+                            <td class="text-center">{{ cat.completed_count }}</td>
+                            <td class="text-center">
+                                {% if cat.completed_count > 0 %}
+                                    <span class="badge {% if cat.pass_rate >= 50 %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ cat.pass_rate }}%
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">&mdash;</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted">No categories configured.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Recent Candidate Submissions -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">Recent Student Attempts</h5>
+                <small class="text-muted">Latest 10 submissions</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Candidate</th>
+                            <th>Exam</th>
+                            <th class="text-center">Score</th>
+                            <th class="text-center">Anti-Cheat</th>
+                            <th class="text-end">Scorecard</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in recent_attempts %}
+                        <tr>
+                            <td>
+                                <strong>{{ att.student.username }}</strong>
+                                <small class="text-muted d-block">{{ att.started_at|date:"d M, H:i" }}</small>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 140px;" title="{{ att.exam.title }}">
+                                    {{ att.exam.title }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if att.result %}
+                                    <span class="badge {% if att.result.passed %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ att.result.score }}/{{ att.result.total_marks }} ({{ att.result.percentage }}%)
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">{{ att.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if att.tab_switch_count > 0 %}
+                                    <span class="badge bg-danger" title="{{ att.tab_switch_count }} window switches logged">
+                                        Violations: {{ att.tab_switch_count }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-success border">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if att.result %}
+                                    <a href="{% url 'exam_result' att.id %}" class="btn btn-outline-secondary btn-sm" title="View official scorecard">
+                                        View &rarr;
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">&mdash;</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-3 text-muted">No student attempts recorded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

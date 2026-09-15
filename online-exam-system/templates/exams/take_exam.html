@@ -1,13 +1,22 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}{{ exam.title }} - Active Examination{% endblock %}
 
 {% block content %}
 <!-- Top Sticky Status Bar -->
+<style>
+    .no-select {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+</style>
 <div class="card shadow-sm border-0 mb-4 sticky-top bg-white" style="top: 15px; z-index: 1020;">
     <div class="card-body py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <span class="badge bg-primary me-2">{{ exam.category.name }}</span>
             <strong class="fs-6">{{ exam.title }}</strong><span class="badge bg-light text-primary border ms-2">Attempt #{{ attempt.id }}</span>
+            <span class="badge bg-light text-danger border ms-2" id="tab-switch-badge">&#9888; Switches: <strong id="tab-switch-count">{{ attempt.tab_switch_count }}</strong></span>
             <span class="text-muted small ms-2 d-none d-md-inline">&bull; Candidate: {{ request.user.username }}</span>
         </div>
 
@@ -26,11 +35,17 @@
     </div>
 </div>
 
+<!-- Tab Switch Warning Alert Banner -->
+<div id="tab-switch-warning" class="alert alert-danger alert-dismissible fade show d-none mb-4 shadow-sm" role="alert">
+    <strong>&#9888; Anti-Cheat Alert:</strong> Window/tab switching is strictly logged. You have left this exam window <strong id="tab-warning-count">{{ attempt.tab_switch_count }}</strong> time(s). All violations are permanently recorded on your scorecard.
+    <button type="button" class="btn-close" onclick="document.getElementById('tab-switch-warning').classList.add('d-none')" aria-label="Close"></button>
+</div>
+
 <div class="row g-4">
     <!-- Left Area: Active Question Card -->
     <div class="col-lg-8">
         {% for q in questions %}
-        <div class="card shadow-sm border-0 question-card {% if not forloop.first %}d-none{% endif %}" id="question-card-{{ forloop.counter0 }}" data-index="{{ forloop.counter0 }}" data-eq-id="{{ q.eq_id }}">
+        <div class="card shadow-sm border-0 question-card no-select {% if not forloop.first %}d-none{% endif %}" id="question-card-{{ forloop.counter0 }}" data-index="{{ forloop.counter0 }}" data-eq-id="{{ q.eq_id }}">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <span class="fw-bold text-primary">Question {{ q.order }} of {{ total_questions }}</span>
                 <div class="d-flex align-items-center gap-2">
@@ -197,10 +212,12 @@
     const attemptId = {{ attempt.id }};
     const endsAt = new Date("{{ ends_at_iso }}").getTime();
     const saveUrl = "{% url 'save_response' attempt.id %}";
+    const recordTabSwitchUrl = "{% url 'record_tab_switch' attempt.id %}";
     const csrfToken = "{{ csrf_token }}";
 
     let currentIndex = 0;
     let reviewFlags = new Array(totalQuestions).fill(false);
+    let tabSwitchCount = {{ attempt.tab_switch_count }};
 
     // Question Navigation
     function showQuestion(index) {
@@ -392,5 +409,64 @@
 
     setInterval(updateTimer, 1000);
     updateTimer();
+
+    // Anti-Cheat: Page Visibility API (Tab Switch Detection)
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+            fetch(recordTabSwitchUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'recorded') {
+                    tabSwitchCount = data.tab_switch_count;
+                    const badge = document.getElementById('tab-switch-count');
+                    if (badge) badge.textContent = tabSwitchCount;
+                    const warnBadge = document.getElementById('tab-warning-count');
+                    if (warnBadge) warnBadge.textContent = tabSwitchCount;
+                }
+            })
+            .catch(err => console.error('Error logging tab switch:', err));
+        } else if (document.visibilityState === 'visible') {
+            // Returned to active window - show warning banner
+            const warningBanner = document.getElementById('tab-switch-warning');
+            if (warningBanner) {
+                const warnBadge = document.getElementById('tab-warning-count');
+                if (warnBadge) warnBadge.textContent = tabSwitchCount;
+                warningBanner.classList.remove('d-none');
+            }
+        }
+    });
+
+    // Anti-Cheat: Prevent context menu (Right-Click)
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // Anti-Cheat: Prevent copy, cut, paste
+    ['copy', 'cut', 'paste'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+            e.preventDefault();
+            return false;
+        });
+    });
+
+    // Anti-Cheat: Prevent inspection & copy keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (
+            (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'v' || e.key === 'V' || e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P')) ||
+            e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I' || e.key === 'j' || e.key === 'J'))
+        ) {
+            e.preventDefault();
+            return false;
+        }
+    });
 </script>
 {% endblock %}

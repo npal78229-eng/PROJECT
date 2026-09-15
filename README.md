@@ -1,4 +1,4 @@
-﻿# Online Exam System (Python + Django)
+# Online Exam System (Python + Django)
 
 Academic Mini-Project for B.Tech / BCA / MCA / Diploma in Computer Engineering.  
 **Student:** Nikhil Pal (Enrollment No.: 20240600)  
@@ -68,5 +68,5 @@ Open your browser at `http://127.0.0.1:8000/`.
 ## 📅 Sprint Progress
 - [x] **Day 1:** Project bootstrap, 4 apps, full database schema & migrations, role signals, Bootstrap base.
 - [x] **Day 2:** Question Bank CRUD, Category management, Exam scheduling, dynamic Faculty & Student Dashboards, server-authoritative "Start Exam" flow.
-- [ ] **Day 3:** Exam Engine (randomization, question navigation, AJAX response autosave, timer auto-submit, evaluation).
-- [ ] **Day 4:** Security measures, tab-switch monitoring, PDF/Excel export, report analytics.
+- [x] **Day 3:** Exam Engine (randomization, question navigation, AJAX response autosave, synchronized timer auto-submit, automated grading engine & scorecard).
+- [x] **Day 4:** Security & anti-cheat (Page Visibility API tab-switch logging, right-click/copy-paste/shortcut prevention, audit trail on scorecards), faculty analytics & institutional performance reports (ORM aggregations), test suite (15/15 passing), institutional branding & polish.

@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}Scorecard: {{ exam.title }} - Online Exam System{% endblock %}
 
 {% block content %}
@@ -96,6 +96,18 @@
                                 <td>{{ attempt.submitted_at|date:"d F Y, h:i:s A" }}</td>
                                 <th class="bg-light">Duration Allowed:</th>
                                 <td>{{ exam.duration_minutes }} minutes</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Anti-Cheat Audit:</th>
+                                <td colspan="3">
+                                    {% if attempt.tab_switch_count > 0 %}
+                                        <span class="badge bg-danger">&#9888; Tab Switches: {{ attempt.tab_switch_count }}</span>
+                                        <span class="text-danger small ms-2">Candidate switched away from the examination window during the session.</span>
+                                    {% else %}
+                                        <span class="badge bg-success">&#10003; Clean Session (0 Tab Switches)</span>
+                                        <span class="text-success small ms-2">No window or tab switching detected during the session.</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                         </tbody>
                     </table>

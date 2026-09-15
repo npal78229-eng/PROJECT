@@ -1,4 +1,4 @@
-﻿from django.urls import path
+from django.urls import path
 from . import views
 
 urlpatterns = [
@@ -11,4 +11,5 @@ urlpatterns = [
     path('attempt/<int:attempt_id>/', views.take_exam, name='take_exam'),
     path('attempt/<int:attempt_id>/save-response/', views.save_response, name='save_response'),
     path('attempt/<int:attempt_id>/submit/', views.submit_exam, name='submit_exam'),
+    path('attempt/<int:attempt_id>/record-tab-switch/', views.record_tab_switch, name='record_tab_switch'),
 ]

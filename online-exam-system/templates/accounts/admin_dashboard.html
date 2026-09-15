@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}Faculty Dashboard - Online Exam System{% endblock %}
 
 {% block content %}
@@ -8,6 +8,7 @@
         <p class="text-muted mb-0">Welcome back, <strong>{{ request.user.username }}</strong>! Manage question banks, subjects, and examinations.</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'exam_reports' %}" class="btn btn-outline-success btn-sm">&#128202; Reports & Analytics</a>
         <a href="{% url 'question_create' %}" class="btn btn-outline-primary btn-sm">+ Add Question</a>
         <a href="{% url 'exam_create' %}" class="btn btn-primary btn-sm">+ Create Exam</a>
     </div>

@@ -335,3 +335,23 @@ def submit_exam(request, attempt_id):
     evaluate_attempt(attempt)
     messages.success(request, 'Your exam has been submitted and evaluated successfully!')
     return redirect('exam_result', attempt_id=attempt.id)
+
+
+@student_required
+@require_POST
+def record_tab_switch(request, attempt_id):
+    """
+    Anti-cheat endpoint: increments ExamAttempt.tab_switch_count when a student
+    switches tabs or leaves the exam browser window (Page Visibility API).
+    """
+    attempt = get_object_or_404(ExamAttempt, pk=attempt_id, student=request.user)
+    if attempt.status != 'in_progress':
+        return JsonResponse({'status': 'ignored', 'message': 'Attempt is not in progress.'}, status=400)
+
+    attempt.tab_switch_count += 1
+    attempt.save(update_fields=['tab_switch_count'])
+
+    return JsonResponse({
+        'status': 'recorded',
+        'tab_switch_count': attempt.tab_switch_count,
+    })
