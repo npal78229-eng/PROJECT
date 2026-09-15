@@ -1,0 +1,125 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ exam.title }} - Exam Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h2 class="h3 mb-0">{{ exam.title }}</h2>
+            <span class="badge bg-{{ state_badge }}">{{ state }}</span>
+        </div>
+        <p class="text-muted mb-0">Created by {{ exam.created_by.username|default:"Admin" }} &bull; Subject: {{ exam.category.name }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'exam_list' %}" class="btn btn-outline-secondary btn-sm">All Exams</a>
+        <a href="{% url 'exam_edit' exam.id %}" class="btn btn-outline-primary btn-sm">Edit Exam</a>
+        <a href="{% url 'exam_delete' exam.id %}" class="btn btn-outline-danger btn-sm">Delete Exam</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center py-3">
+            <div class="card-body p-2">
+                <span class="text-muted small text-uppercase fw-bold">Duration</span>
+                <h3 class="mb-0 mt-1 text-primary">{{ exam.duration_minutes }} <small class="fs-6 text-muted">mins</small></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center py-3">
+            <div class="card-body p-2">
+                <span class="text-muted small text-uppercase fw-bold">Total Questions</span>
+                <h3 class="mb-0 mt-1 text-primary">{{ exam.total_questions }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center py-3">
+            <div class="card-body p-2">
+                <span class="text-muted small text-uppercase fw-bold">Passing Marks</span>
+                <h3 class="mb-0 mt-1 text-success">{{ exam.passing_marks }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center py-3">
+            <div class="card-body p-2">
+                <span class="text-muted small text-uppercase fw-bold">Student Attempts</span>
+                <h3 class="mb-0 mt-1 text-dark">{{ attempts|length }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0">Exam Schedule Window</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-2 mb-md-0">
+                <div class="text-muted small">Window Opens</div>
+                <strong>{{ exam.scheduled_start|date:"l, d F Y - h:i A" }}</strong>
+            </div>
+            <div class="col-md-6">
+                <div class="text-muted small">Window Closes</div>
+                <strong>{{ exam.scheduled_end|date:"l, d F Y - h:i A" }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Attempts Section -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Student Attempts Log ({{ attempts|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if attempts %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student</th>
+                        <th>Started At</th>
+                        <th>Authoritative End Time</th>
+                        <th>Status</th>
+                        <th>Tab Switches</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in attempts %}
+                    <tr>
+                        <td>
+                            <strong>{{ a.student.username }}</strong>
+                            <div class="text-muted small">{{ a.student.email }}</div>
+                        </td>
+                        <td>{{ a.started_at|date:"d M Y, h:i A" }}</td>
+                        <td>{{ a.ends_at|date:"d M Y, h:i A" }}</td>
+                        <td>
+                            {% if a.status == 'in_progress' %}
+                                <span class="badge bg-warning text-dark">In Progress</span>
+                            {% elif a.status == 'submitted' %}
+                                <span class="badge bg-success">Submitted</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ a.status|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ a.tab_switch_count }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            <p class="mb-0">No students have attempted this examination yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

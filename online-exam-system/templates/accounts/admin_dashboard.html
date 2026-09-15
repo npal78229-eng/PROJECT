@@ -1,0 +1,131 @@
+﻿{% extends 'base.html' %}
+{% block title %}Faculty Dashboard - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="h3 mb-0">Faculty / Admin Dashboard</h2>
+        <p class="text-muted mb-0">Welcome back, <strong>{{ request.user.username }}</strong>! Manage question banks, subjects, and examinations.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'question_create' %}" class="btn btn-outline-primary btn-sm">+ Add Question</a>
+        <a href="{% url 'exam_create' %}" class="btn btn-primary btn-sm">+ Create Exam</a>
+    </div>
+</div>
+
+<!-- Metrics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted text-uppercase small fw-bold">Question Bank</span>
+                        <h2 class="display-6 fw-bold mb-0 text-primary mt-1">{{ total_questions }}</h2>
+                        <span class="text-muted small">Total Questions</span>
+                    </div>
+                    <a href="{% url 'question_list' %}" class="btn btn-sm btn-outline-primary">Manage</a>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 pt-0">
+                <a href="{% url 'question_create' %}" class="small text-decoration-none">+ Add new question &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted text-uppercase small fw-bold">Categories / Subjects</span>
+                        <h2 class="display-6 fw-bold mb-0 text-success mt-1">{{ total_categories }}</h2>
+                        <span class="text-muted small">Total Subjects</span>
+                    </div>
+                    <a href="{% url 'category_list' %}" class="btn btn-sm btn-outline-success">Manage</a>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 pt-0">
+                <a href="{% url 'category_list' %}" class="small text-decoration-none text-success">+ Create category &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted text-uppercase small fw-bold">Exams</span>
+                        <h2 class="display-6 fw-bold mb-0 text-info mt-1">{{ total_exams }}</h2>
+                        <span class="text-muted small">Scheduled Exams</span>
+                    </div>
+                    <a href="{% url 'exam_list' %}" class="btn btn-sm btn-outline-info">Manage</a>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 pt-0">
+                <a href="{% url 'exam_create' %}" class="small text-decoration-none text-info">+ Schedule new exam &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Exams Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Recently Created Examinations</h5>
+        <a href="{% url 'exam_list' %}" class="btn btn-sm btn-link text-decoration-none">View All Exams &rarr;</a>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_exams %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Exam Title</th>
+                        <th>Subject</th>
+                        <th>Duration</th>
+                        <th>Questions</th>
+                        <th>Status</th>
+                        <th>Attempts</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in recent_exams %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'exam_detail' exam.id %}" class="fw-bold text-decoration-none">
+                                {{ exam.title }}
+                            </a>
+                            <div class="text-muted small">
+                                {{ exam.scheduled_start|date:"d M, h:i A" }} &ndash; {{ exam.scheduled_end|date:"d M, h:i A" }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info text-dark">{{ exam.category.name }}</span>
+                        </td>
+                        <td>{{ exam.duration_minutes }} mins</td>
+                        <td>{{ exam.total_questions }}</td>
+                        <td>
+                            <span class="badge bg-{{ exam.state_badge }}">{{ exam.state }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary rounded-pill">{{ exam.attempt_count }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'exam_detail' exam.id %}" class="btn btn-sm btn-outline-info">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            <p class="mb-2">No exams created yet.</p>
+            <a href="{% url 'exam_create' %}" class="btn btn-primary btn-sm">+ Create Your First Exam</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

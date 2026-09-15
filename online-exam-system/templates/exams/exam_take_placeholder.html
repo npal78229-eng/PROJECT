@@ -1,0 +1,75 @@
+﻿{% extends 'base.html' %}
+{% block title %}Exam Session: {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Top status bar -->
+        <div class="card shadow-sm border-primary mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                <h4 class="mb-0 h5">{{ exam.title }}</h4>
+                <span class="badge bg-light text-primary fs-6">Attempt #{{ attempt.id }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 text-center mb-3">
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Subject</span>
+                            <strong>{{ exam.category.name }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Total Questions</span>
+                            <strong>{{ exam.total_questions }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Duration</span>
+                            <strong>{{ exam.duration_minutes }} mins</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-2 border rounded bg-light">
+                            <span class="text-muted small d-block">Passing Marks</span>
+                            <strong>{{ exam.passing_marks }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info d-flex align-items-center mb-4">
+                    <div class="me-3 fs-3">??</div>
+                    <div>
+                        <div class="fw-bold">Server Authoritative End Time:</div>
+                        <div>{{ attempt.ends_at|date:"l, d F Y - h:i:s A" }}</div>
+                        <div class="small text-muted">Remaining Time: ~{{ remaining_seconds|divisibleby:60 }} minutes ({{ remaining_seconds }} seconds)</div>
+                    </div>
+                </div>
+
+                <!-- Day 2 Milestone notice -->
+                <div class="card border-success bg-light mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            Day 2 Milestone Reached: Exam Attempt Server Record Locked
+                        </h5>
+                        <p class="card-text mb-2">
+                            Your attempt record (<strong>ID #{{ attempt.id }}</strong>) has been successfully created in the database with status <code>{{ attempt.status }}</code>.
+                            The end timestamp is securely set on the server to prevent local clock tampering.
+                        </p>
+                        <p class="card-text text-muted small mb-0">
+                            <strong>Coming up in Day 3:</strong> Random question selection and locking (<code>ExamQuestion</code>), interactive question navigation bar, asynchronous AJAX response auto-saving, anti-cheat tab switch monitoring, and automatic evaluation upon submission.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'student_dashboard' %}" class="btn btn-outline-secondary">Return to Student Dashboard</a>
+                    <span class="text-muted small">Logged in as: <strong>{{ request.user.username }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

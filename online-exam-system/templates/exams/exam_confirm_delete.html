@@ -1,0 +1,28 @@
+﻿{% extends 'base.html' %}
+{% block title %}Delete Exam - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">Confirm Delete Exam</h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete the examination <strong>"{{ exam.title }}"</strong>?</p>
+                <div class="alert alert-warning">
+                    <strong>Warning:</strong> Deleting this exam will also remove all student attempts and records associated with it.
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'exam_detail' exam.id %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

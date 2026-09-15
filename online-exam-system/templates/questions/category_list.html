@@ -1,0 +1,83 @@
+﻿{% extends 'base.html' %}
+{% block title %}Manage Categories - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 mb-0">Question Categories</h2>
+        <p class="text-muted mb-0">Organize your question bank by subjects and topics.</p>
+    </div>
+    <div>
+        <a href="{% url 'question_list' %}" class="btn btn-outline-secondary btn-sm">All Questions</a>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-primary btn-sm">Admin Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0">Add New Category</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Category Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save Category</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Existing Categories ({{ categories|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if categories %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50%;">Category Name</th>
+                                <th>Questions</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in categories %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cat.name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary rounded-pill">{{ cat.question_count }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'question_list' %}?category={{ cat.id }}" class="btn btn-sm btn-outline-info me-1" title="View questions">View Questions</a>
+                                    <a href="{% url 'question_create' %}?category={{ cat.id }}" class="btn btn-sm btn-outline-success me-1" title="Add question">+ Add Q</a>
+                                    <a href="{% url 'category_delete' cat.id %}" class="btn btn-sm btn-outline-danger" title="Delete category">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <p class="mb-0">No categories created yet. Add one using the form on the left!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,93 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ title }} - Online Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h4 class="card-title mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body p-4">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">Exam Title</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold">Subject / Category</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.total_questions.id_for_label }}" class="form-label fw-semibold">Total Questions</label>
+                            {{ form.total_questions }}
+                            <div class="form-text">Questions randomly chosen per attempt.</div>
+                            {% if form.total_questions.errors %}
+                                <div class="text-danger small mt-1">{{ form.total_questions.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.duration_minutes.id_for_label }}" class="form-label fw-semibold">Duration (Minutes)</label>
+                            {{ form.duration_minutes }}
+                            {% if form.duration_minutes.errors %}
+                                <div class="text-danger small mt-1">{{ form.duration_minutes.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.passing_marks.id_for_label }}" class="form-label fw-semibold">Passing Marks</label>
+                            {{ form.passing_marks }}
+                            {% if form.passing_marks.errors %}
+                                <div class="text-danger small mt-1">{{ form.passing_marks.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.scheduled_start.id_for_label }}" class="form-label fw-semibold">Start Date & Time</label>
+                            {{ form.scheduled_start }}
+                            {% if form.scheduled_start.errors %}
+                                <div class="text-danger small mt-1">{{ form.scheduled_start.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.scheduled_end.id_for_label }}" class="form-label fw-semibold">End Date & Time</label>
+                            {{ form.scheduled_end }}
+                            {% if form.scheduled_end.errors %}
+                                <div class="text-danger small mt-1">{{ form.scheduled_end.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'exam_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">{{ button_text }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
