@@ -10,6 +10,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import Orders from './pages/Orders';
 import ProtectedRoute from './components/ProtectedRoute';
 import { checkAuth } from './redux/authSlice';
 import { fetchCart } from './redux/cartSlice';
@@ -54,7 +55,7 @@ export default function App() {
           path="/orders"
           element={
             <ProtectedRoute>
-              <Cart />
+              <Orders />
             </ProtectedRoute>
           }
         />

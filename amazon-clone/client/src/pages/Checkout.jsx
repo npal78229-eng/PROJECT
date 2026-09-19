@@ -46,7 +46,7 @@ export default function Checkout() {
       // 1. Call /checkout to get clientSecret (or fallback mock)
       let clientSecret = null;
       try {
-        const res = await api.post('/orders/checkout');
+        const res = await api.post('/orders/checkout', { cartItems: items });
         clientSecret = res.data.clientSecret;
       } catch (err) {
         console.warn('Live Stripe secret not available, proceeding in test mock mode', err);
@@ -73,6 +73,7 @@ export default function Checkout() {
         const confirmRes = await api.post('/orders/confirm', {
           paymentIntentId,
           shippingAddress: address,
+          cartItems: items,
         });
         setOrderId(confirmRes.data?.orderId || Math.floor(100000 + Math.random() * 900000));
       } catch (confirmErr) {
