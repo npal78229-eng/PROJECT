@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import { removeFromCart, addToCart } from '../redux/cartSlice';
+import { removeFromCart, addToCart, updateCartQuantity } from '../redux/cartSlice';
 
 export default function Cart() {
   const { items } = useSelector((state) => state.cart);
@@ -66,9 +66,9 @@ export default function Cart() {
                           <button
                             onClick={() =>
                               dispatch(
-                                addToCart({
-                                  product_id: item.id,
-                                  quantity: -1,
+                                updateCartQuantity({
+                                  productId: item.id,
+                                  quantity: item.quantity - 1,
                                 })
                               )
                             }
@@ -81,9 +81,9 @@ export default function Cart() {
                           <button
                             onClick={() =>
                               dispatch(
-                                addToCart({
-                                  product_id: item.id,
-                                  quantity: 1,
+                                updateCartQuantity({
+                                  productId: item.id,
+                                  quantity: item.quantity + 1,
                                 })
                               )
                             }
