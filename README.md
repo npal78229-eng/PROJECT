@@ -1,28 +1,40 @@
-# Online Exam System (Python + Django)
+# Engineering Portfolio Projects
 
-Academic Mini-Project for B.Tech / BCA / MCA / Diploma in Computer Engineering.  
-**Student:** Nikhil Pal (Enrollment No.: 20240600)  
-**Guide:** Ms. Ragini Sharma  
-**Institution:** Faculty of Engineering and Technology, Mangalayatan University, Beswan  
+Multi-project full-stack software engineering repository containing production-grade applications.
 
 ---
 
-## 🚀 Overview
-The Online Exam System is a web-based examination platform developed using Python, Django, Bootstrap 5, and MySQL/SQLite. It provides automated examination management, question bank management with objective-type MCQs, timed exams with server-side authoritative end timestamps, and role-based portals for administrators/faculty and students.
+## 📁 Repository Projects
 
-## 📁 Repository Structure
+### 1. [Online Exam System (Python + Django)](./online-exam-system)
+A web-based examination platform developed using Python, Django, Bootstrap 5, and MySQL/SQLite. Provides automated examination management, question bank management with objective-type MCQs, synchronized countdown timers, anti-cheat tab-switch detection, and role-based portals for administrators, faculty, and students.
+- **Path:** [`online-exam-system/`](./online-exam-system)
+- **Tech Stack:** Python 3.11+, Django 5.x, Bootstrap 5, MySQL / SQLite
+
+### 2. [Amazon Clone E-Commerce Store (React + Express + PostgreSQL)](./amazon-clone)
+A production-style e-commerce platform built with React, Vite, Tailwind CSS, and Redux Toolkit on the frontend, and Node.js, Express, PostgreSQL, and Stripe on the backend. Covers catalog search/filters, JWT auth, persistent server-side cart, and atomic transaction-based checkout with inventory locking.
+- **Path:** [`amazon-clone/`](./amazon-clone)
+- **Tech Stack:** React (Vite), Redux Toolkit, Tailwind CSS, Express, PostgreSQL, Stripe
+
+---
+
+## 🗂️ Workspace Directory Tree
 ```
 PROJECT/
-└── online-exam-system/
-    ├── accounts/       → Role-based authentication (Admin / Student), Profiles, Dashboards
-    ├── questions/      → Question Bank CRUD, Subject/Category management
-    ├── exams/          → Exam scheduling, Student Start/Resume flow, Attempt tracking
-    ├── results/        → Student responses & evaluation models
-    ├── templates/      → Bootstrap 5 UI templates (responsive navbar, forms, tables)
-    ├── examsystem/     → Core Django settings and URL configurations
-    ├── manage.py
-    ├── requirements.txt
-    └── .env.example
+├── online-exam-system/         # Project 1: Django Exam Engine & Portal
+│   ├── accounts/
+│   ├── exams/
+│   ├── questions/
+│   ├── results/
+│   ├── templates/
+│   └── README.md
+│
+├── amazon-clone/               # Project 2: Full-Stack E-Commerce Store
+│   ├── client/                 # React 18 (Vite) + Tailwind + Redux
+│   ├── server/                 # Express REST API + PostgreSQL
+│   └── README.md
+│
+└── README.md                   # Workspace portfolio index
 ```
 
 ## 🛠️ Tech Stack
