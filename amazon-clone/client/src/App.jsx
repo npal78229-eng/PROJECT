@@ -11,6 +11,8 @@ import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
+import SellerDashboard from './pages/SellerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { checkAuth } from './redux/authSlice';
 import { fetchCart } from './redux/cartSlice';
@@ -56,6 +58,24 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Orders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/seller"
+          element={
+            <ProtectedRoute allowedRoles={['seller', 'admin']}>
+              <SellerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
             </ProtectedRoute>
           }
         />

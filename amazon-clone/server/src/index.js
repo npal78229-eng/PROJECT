@@ -22,8 +22,11 @@ app.get('/', (req, res) => {
 // Mount Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
+app.use('/api/products/:productId/reviews', require('./routes/reviews'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/seller', require('./routes/seller'));
+app.use('/api/admin', require('./routes/admin'));
 
 // 404 Handler
 app.use((req, res) => {
