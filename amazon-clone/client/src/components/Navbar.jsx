@@ -79,10 +79,10 @@ export default function Navbar({ onSearch }) {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <div className="text-xs leading-tight">
+              <Link to="/profile" className="text-xs leading-tight hover:border border-white p-1 rounded">
                 <p className="text-gray-400">Hello, {user?.name?.split(' ')[0] || 'User'}</p>
                 <p className="font-bold text-white capitalize">{user?.role || 'Account'}</p>
-              </div>
+              </Link>
               <button
                 onClick={() => dispatch(logout())}
                 title="Sign Out"

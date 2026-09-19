@@ -1,17 +1,37 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
+import Profile from './pages/Profile';
+import ProtectedRoute from './components/ProtectedRoute';
+import { checkAuth } from './redux/authSlice';
+import { fetchCart } from './redux/cartSlice';
 
-// Placeholder test publishable key (safe for testing)
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 export default function App() {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    // Rehydrate session from stored JWT on startup
+    dispatch(checkAuth());
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Fetch user cart if authenticated
+    if (isAuthenticated) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch, isAuthenticated]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -19,15 +39,36 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/checkout"
           element={
-            <Elements stripe={stripePromise}>
-              <Checkout />
-            </Elements>
+            <ProtectedRoute>
+              <Elements stripe={stripePromise}>
+                <Checkout />
+              </Elements>
+            </ProtectedRoute>
           }
         />
-        <Route path="/orders" element={<Cart />} />
       </Routes>
     </BrowserRouter>
   );
