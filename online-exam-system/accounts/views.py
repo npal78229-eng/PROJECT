@@ -1,4 +1,5 @@
-﻿from django.contrib import messages
+from django.contrib import messages
+from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Count
@@ -39,6 +40,17 @@ class RoleBasedLoginView(LoginView):
 
 class RoleBasedLogoutView(LogoutView):
     next_page = reverse_lazy('login')
+
+    def get(self, request, *args, **kwargs):
+        """Allow GET request for logout to prevent HTTP 405 error in Django 5+."""
+        return self.post(request, *args, **kwargs)
+
+
+def user_logout(request):
+    """Logs out user via GET or POST link and redirects to login with feedback message."""
+    auth_logout(request)
+    messages.info(request, 'You have been logged out successfully.')
+    return redirect('login')
 
 
 @login_required
