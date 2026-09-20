@@ -6,6 +6,7 @@ router.use(authenticate);
 
 // In-memory session cart store for resilient local testing if PostgreSQL client is offline
 const inMemoryCarts = new Map();
+router.inMemoryCarts = inMemoryCarts;
 
 // 1. Get cart items for logged-in user
 router.get('/', async (req, res) => {
@@ -29,7 +30,9 @@ router.get('/', async (req, res) => {
 // 2. Add or increment item in cart
 router.post('/', async (req, res) => {
   const userId = req.user.id;
-  const { product_id, quantity = 1, itemData } = req.body;
+  const product_id = req.body.product_id || req.body.productId;
+  const quantity = req.body.quantity || 1;
+  const itemData = req.body.itemData;
 
   if (!product_id) {
     return res.status(400).json({ message: 'product_id is required' });
