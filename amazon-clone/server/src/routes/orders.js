@@ -156,11 +156,25 @@ router.post('/confirm', async (req, res) => {
     }
 
     const orderId = Math.floor(100000 + Math.random() * 900000);
+    const paymentMethod = req.body.paymentMethod || 'card';
+    let walletBalance = null;
+
+    if (paymentMethod === 'wallet') {
+      try {
+        const walletRouter = require('./wallet');
+        const deduction = walletRouter.deductWalletBalance(userId, total, `Order Payment #${orderId}`);
+        walletBalance = deduction.balance;
+      } catch (wErr) {
+        return res.status(400).json({ message: wErr.message });
+      }
+    }
+
     const newOrder = {
       id: orderId,
       user_id: userId,
       total_amount: total,
-      status: 'paid',
+      status: req.body.markDelivered ? 'delivered' : 'paid',
+      payment_method: paymentMethod === 'wallet' ? 'Amazon Pay Wallet' : 'Stripe Card',
       shipping_address: shippingAddress,
       payment_intent_id: paymentIntentId,
       created_at: new Date().toISOString(),
@@ -169,6 +183,7 @@ router.post('/confirm', async (req, res) => {
         quantity: i.quantity,
         price: i.price,
         title: i.title,
+        images: i.images || ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'],
       })),
     };
 
@@ -176,7 +191,13 @@ router.post('/confirm', async (req, res) => {
     userOrders.unshift(newOrder);
     inMemoryOrders.set(userId, userOrders);
 
-    res.status(201).json({ orderId, total, status: 'paid' });
+    res.status(201).json({
+      orderId,
+      total,
+      status: newOrder.status,
+      paymentMethod: newOrder.payment_method,
+      walletBalance,
+    });
   } finally {
     if (client) {
       try {
@@ -186,7 +207,7 @@ router.post('/confirm', async (req, res) => {
   }
 });
 
-// 3. User past order history
+// 3. User past order history (Includes sample delivered order so customer can post photo/video reviews immediately)
 router.get('/my-orders', async (req, res) => {
   const userId = req.user.id;
   try {
@@ -210,9 +231,51 @@ router.get('/my-orders', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.warn('Database orders query fallback:', err.message);
+    if (!inMemoryOrders.has(userId)) {
+      inMemoryOrders.set(userId, [
+        {
+          id: 948271,
+          user_id: userId,
+          total_amount: 199.99,
+          status: 'delivered',
+          payment_method: 'Amazon Pay Wallet',
+          created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+          delivered_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+          shipping_address: {
+            fullName: req.user.name || 'Demo Customer',
+            line1: '123 Market Street, Apt 4B',
+            city: 'Seattle',
+            state: 'WA',
+          },
+          items: [
+            {
+              product_id: 1,
+              title: 'Noise-Cancelling Wireless Headphones Pro',
+              price: 199.99,
+              quantity: 1,
+              images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'],
+            },
+          ],
+        },
+      ]);
+    }
     const userOrders = inMemoryOrders.get(userId) || [];
     res.json(userOrders);
   }
+});
+
+// 4. Mark an order as delivered (so customer can immediately post photo/video product review)
+router.patch('/:id/deliver', (req, res) => {
+  const userId = req.user.id;
+  const orderId = parseInt(req.params.id, 10);
+  const userOrders = inMemoryOrders.get(userId) || [];
+  const order = userOrders.find((o) => Number(o.id) === orderId);
+  if (order) {
+    order.status = 'delivered';
+    order.delivered_at = new Date().toISOString();
+    return res.json({ message: `Order #${orderId} marked as DELIVERED`, order });
+  }
+  res.json({ message: `Order #${orderId} marked as DELIVERED`, status: 'delivered' });
 });
 
 // Helper for tests: inspect stock

@@ -27,6 +27,9 @@ app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/seller', require('./routes/seller'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/wallet', require('./routes/wallet'));
+app.use('/api/support', require('./routes/support'));
+app.use('/api/settings', require('./routes/settings'));
 
 // 404 Handler
 app.use((req, res) => {

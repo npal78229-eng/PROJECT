@@ -1,9 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { Star, ShieldCheck, Truck, ArrowLeft, Check, ShoppingCart, Award } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  Star,
+  ShieldCheck,
+  Truck,
+  ArrowLeft,
+  Check,
+  ShoppingCart,
+  Award,
+  Camera,
+  Video,
+  Scale,
+  CheckCircle2,
+  X,
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { addToCart } from '../redux/cartSlice';
+import { toggleCompareItem } from '../redux/compareSlice';
 import api from '../api/axios';
 
 const SEED_CATALOG = [
@@ -144,6 +158,8 @@ const SEED_CATALOG = [
 export default function ProductDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const compareItems = useSelector((state) => state.compare?.items || []);
+
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -152,10 +168,14 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewPhotos, setReviewPhotos] = useState([]);
+  const [reviewVideos, setReviewVideos] = useState([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const productId = parseInt(id, 10);
+  const isComparing = compareItems.some((item) => Number(item.id) === Number(productId));
 
   useEffect(() => {
     let isMounted = true;
@@ -173,27 +193,49 @@ export default function ProductDetail() {
         if (isMounted) setLoading(false);
       });
 
-    // Fetch reviews
+    // Fetch reviews + merge local media reviews from Orders page
+    const localKey = `amazon_clone_reviews_${productId}`;
+    const localSaved = JSON.parse(localStorage.getItem(localKey) || '[]');
+
     api
       .get(`/products/${productId}/reviews`)
       .then((res) => {
-        if (isMounted && res.data) setReviews(res.data);
+        if (isMounted && res.data) {
+          const apiRevs = Array.isArray(res.data) ? res.data : [];
+          setReviews([...localSaved, ...apiRevs]);
+        }
       })
-      .catch((err) => {
+      .catch(() => {
         if (isMounted) {
           setReviews([
+            ...localSaved,
             {
-              id: 1,
-              user_name: 'David Miller',
+              id: 101,
+              user_name: 'Alex Johnson',
               rating: 5,
-              comment: 'Super fast delivery and the product quality exceeded my expectations!',
+              verified_delivery: true,
+              order_id: 948271,
+              comment:
+                'Delivered right on time! Attached unboxing photos and a video clip of the product in action. Exceptional quality!',
+              photos: [
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+                'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&q=80',
+              ],
+              videos: [
+                'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+              ],
               created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
             },
             {
-              id: 2,
-              user_name: 'Jessica Taylor',
-              rating: 4,
-              comment: 'Great value for money. Minor packaging dent but the item was flawless.',
+              id: 102,
+              user_name: 'Sarah Connor',
+              rating: 5,
+              verified_delivery: true,
+              comment: 'Great value for money. Sharing a real photo after delivery!',
+              photos: [
+                'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80',
+              ],
+              videos: [],
               created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
             },
           ]);
@@ -204,6 +246,25 @@ export default function ProductDetail() {
       isMounted = false;
     };
   }, [productId]);
+
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) setReviewPhotos((prev) => [...prev, ev.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      const url = URL.createObjectURL(file);
+      setReviewVideos((prev) => [...prev, url]);
+    });
+  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -216,6 +277,9 @@ export default function ProductDetail() {
       const res = await api.post(`/products/${productId}/reviews`, {
         rating: reviewRating,
         comment: reviewComment,
+        photos: reviewPhotos,
+        videos: reviewVideos,
+        verified_delivery: true,
       });
 
       if (res.data?.review) {
@@ -229,15 +293,19 @@ export default function ProductDetail() {
         }));
       }
       setReviewComment('');
+      setReviewPhotos([]);
+      setReviewVideos([]);
       setReviewSuccess(true);
       setTimeout(() => setReviewSuccess(false), 3000);
     } catch (err) {
-      // Offline simulation fallback
       const localReview = {
         id: Date.now(),
-        user_name: 'You (Verified Buyer)',
+        user_name: 'You (Verified Delivered Customer)',
         rating: reviewRating,
         comment: reviewComment,
+        photos: reviewPhotos,
+        videos: reviewVideos,
+        verified_delivery: true,
         created_at: new Date().toISOString(),
       };
       setReviews([localReview, ...reviews]);
@@ -252,6 +320,8 @@ export default function ProductDetail() {
         num_reviews: (prev?.num_reviews || 10) + 1,
       }));
       setReviewComment('');
+      setReviewPhotos([]);
+      setReviewVideos([]);
       setReviewSuccess(true);
       setTimeout(() => setReviewSuccess(false), 3000);
     } finally {
@@ -426,8 +496,20 @@ export default function ProductDetail() {
               to="/checkout"
               className="block text-center w-full mt-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm py-2.5 px-4 rounded-full transition shadow-sm"
             >
-              Buy Now
+              Buy Now (Wallet / Card)
             </Link>
+
+            <button
+              type="button"
+              onClick={() => dispatch(toggleCompareItem(product))}
+              className={`w-full mt-2 py-2 px-4 rounded-full font-bold text-xs border transition flex items-center justify-center gap-1.5 ${
+                isComparing
+                  ? 'bg-amber-100 border-amber-400 text-amber-900'
+                  : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+              }`}
+            >
+              <Scale size={14} /> {isComparing ? 'Added to Comparison' : 'Add to Compare'}
+            </button>
 
             <div className="mt-4 text-xs text-gray-500 space-y-1">
               <p>Ships from: Amazon Logistics</p>
@@ -437,12 +519,27 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Customer Reviews Section */}
+        {/* Customer Reviews & Delivered Product Media Section */}
         <div className="mt-10 bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Customer Reviews & Ratings</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Customer Reviews, Photos &amp; Unboxing Videos
+              </h2>
+              <p className="text-xs text-gray-500">
+                Verified customers who received their order can post real product photos and videos with their comments.
+              </p>
+            </div>
+            <Link
+              to="/orders"
+              className="text-xs font-bold text-amber-700 hover:underline flex items-center gap-1"
+            >
+              <Camera size={14} /> Post from Your Delivered Orders ›
+            </Link>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-            {/* Left Column: Rating Aggregates */}
+            {/* Left Column: Rating Aggregates & Media Review Form */}
             <div className="md:col-span-4 border-r md:pr-8">
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-extrabold text-gray-900">{product.rating || 4.8}</span>
@@ -465,10 +562,14 @@ export default function ProductDetail() {
 
               <p className="text-xs text-gray-500 mb-6">{product.num_reviews || 128} global ratings</p>
 
-              {/* Write a review box */}
+              {/* Write a review with Photo / Video box */}
               <div className="pt-6 border-t border-gray-200">
-                <h3 className="font-bold text-sm text-gray-900 mb-1">Review this product</h3>
-                <p className="text-xs text-gray-500 mb-4">Share your thoughts with other customers</p>
+                <h3 className="font-bold text-sm text-gray-900 mb-1">
+                  Post Photo / Video Review
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Upload photos or a video of your delivered product with your comment
+                </p>
 
                 <form onSubmit={handleReviewSubmit} className="space-y-3">
                   <div>
@@ -494,47 +595,102 @@ export default function ProductDetail() {
                     </div>
                   </div>
 
+                  {/* Upload Photo / Video Controls */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="cursor-pointer bg-gray-50 hover:bg-amber-50 border border-dashed border-amber-400 rounded-lg p-2 text-center text-[11px] font-bold text-gray-800 flex items-center justify-center gap-1.5 transition">
+                      <Camera size={14} className="text-amber-600" /> + Add Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <label className="cursor-pointer bg-gray-50 hover:bg-blue-50 border border-dashed border-blue-400 rounded-lg p-2 text-center text-[11px] font-bold text-gray-800 flex items-center justify-center gap-1.5 transition">
+                      <Video size={14} className="text-blue-600" /> + Add Video
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {(reviewPhotos.length > 0 || reviewVideos.length > 0) && (
+                    <div className="flex flex-wrap gap-2 bg-gray-50 p-2 rounded-lg border">
+                      {reviewPhotos.map((img, i) => (
+                        <img
+                          key={i}
+                          src={img}
+                          alt="upload preview"
+                          className="w-12 h-12 object-cover rounded border"
+                        />
+                      ))}
+                      {reviewVideos.map((vid, i) => (
+                        <div
+                          key={i}
+                          className="w-16 h-12 bg-black text-white text-[9px] font-bold flex items-center justify-center rounded"
+                        >
+                          VIDEO #{i + 1}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Your Review</label>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Your Comment</label>
                     <textarea
                       rows={3}
                       value={reviewComment}
                       onChange={(e) => setReviewComment(e.target.value)}
-                      placeholder="What did you like or dislike? How was the build quality?"
+                      placeholder="What did you like or dislike? How was the delivered item?"
                       required
                       className="w-full border border-gray-300 rounded p-2.5 text-xs outline-none focus:border-amber-500"
                     ></textarea>
                   </div>
 
                   {reviewSuccess && (
-                    <p className="text-xs text-emerald-600 font-semibold">Review submitted and rating updated!</p>
+                    <p className="text-xs text-emerald-600 font-semibold">
+                      Photo/Video Review published and rating updated!
+                    </p>
                   )}
 
                   <button
                     type="submit"
                     disabled={reviewSubmitting}
-                    className="w-full bg-amber-400 hover:bg-amber-500 text-gray-950 font-semibold text-xs py-2 px-4 rounded-full shadow-sm transition"
+                    className="w-full bg-amber-400 hover:bg-amber-500 text-gray-950 font-bold text-xs py-2.5 px-4 rounded-full shadow-sm transition"
                   >
-                    {reviewSubmitting ? 'Posting...' : 'Submit Review'}
+                    {reviewSubmitting ? 'Publishing...' : 'Submit Photo / Video Review'}
                   </button>
                 </form>
               </div>
             </div>
 
-            {/* Right Column: Reviews List */}
+            {/* Right Column: Reviews List with Photo & Video Players */}
             <div className="md:col-span-8 space-y-6">
-              <h3 className="font-bold text-sm text-gray-900 mb-4">Top Reviews</h3>
+              <h3 className="font-bold text-sm text-gray-900 mb-4">
+                Verified Customer Reviews ({reviews.length})
+              </h3>
 
               {reviews.length === 0 ? (
-                <p className="text-xs text-gray-500">No written reviews yet. Be the first to review this product!</p>
+                <p className="text-xs text-gray-500">
+                  No written reviews yet. Be the first to review this product!
+                </p>
               ) : (
                 reviews.map((rev) => (
                   <div key={rev.id} className="pb-6 border-b border-gray-100 last:border-b-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center font-bold text-xs">
                         {rev.user_name ? rev.user_name[0].toUpperCase() : 'C'}
                       </div>
-                      <span className="text-xs font-semibold text-gray-800">{rev.user_name || 'Verified Purchaser'}</span>
+                      <span className="text-xs font-bold text-gray-900">
+                        {rev.user_name || 'Verified Purchaser'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        <CheckCircle2 size={11} /> Verified Delivered Order
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2 mb-2">
@@ -552,7 +708,36 @@ export default function ProductDetail() {
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-700 leading-relaxed">{rev.comment}</p>
+                    <p className="text-xs text-gray-800 leading-relaxed mb-3">{rev.comment}</p>
+
+                    {/* Attached Customer Photos & Videos */}
+                    {((rev.photos && rev.photos.length > 0) ||
+                      (rev.videos && rev.videos.length > 0)) && (
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        {(rev.photos || []).map((photoUrl, pIdx) => (
+                          <img
+                            key={pIdx}
+                            src={photoUrl}
+                            alt="Customer product photo"
+                            onClick={() => setLightboxImage(photoUrl)}
+                            className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition shadow-sm"
+                          />
+                        ))}
+
+                        {(rev.videos || []).map((videoUrl, vIdx) => (
+                          <div
+                            key={vIdx}
+                            className="rounded-lg overflow-hidden border border-gray-300 bg-black shadow-sm"
+                          >
+                            <video
+                              src={videoUrl}
+                              controls
+                              className="h-24 w-44 object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -560,6 +745,28 @@ export default function ProductDetail() {
           </div>
         </div>
       </main>
+
+      {/* Lightbox Modal for Customer Review Photo */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        >
+          <div className="relative max-w-2xl w-full">
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-amber-400"
+            >
+              <X size={28} />
+            </button>
+            <img
+              src={lightboxImage}
+              alt="Enlarged customer review"
+              className="w-full max-h-[80vh] object-contain rounded-xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

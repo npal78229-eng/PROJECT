@@ -80,12 +80,57 @@ CREATE TABLE order_items (
     price_at_purchase NUMERIC(10,2) NOT NULL CHECK (price_at_purchase >= 0)
 );
 
--- 7. Reviews Table
+-- 7. Reviews Table (with Delivered Order Photo & Video Support)
 CREATE TABLE reviews (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    order_id INT REFERENCES orders(id) ON DELETE SET NULL,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     comment TEXT,
+    photos TEXT[] DEFAULT '{}',
+    videos TEXT[] DEFAULT '{}',
+    verified_delivery BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 8. Amazon Clone Wallet Table
+CREATE TABLE wallets (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    balance NUMERIC(10,2) DEFAULT 250.00 CHECK (balance >= 0),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 9. Wallet Transactions Table
+CREATE TABLE wallet_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('credit', 'debit')),
+    amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+    description VARCHAR(255) NOT NULL,
+    method VARCHAR(80) DEFAULT 'Amazon Pay Wallet',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 10. Customer Service Call Requests (Complaints)
+CREATE TABLE support_call_requests (
+    id VARCHAR(30) PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    order_id VARCHAR(50),
+    phone VARCHAR(40) NOT NULL,
+    category VARCHAR(120) NOT NULL,
+    urgency VARCHAR(80) DEFAULT 'Immediate Callback',
+    preferred_time VARCHAR(80),
+    complaint_details TEXT NOT NULL,
+    assigned_agent VARCHAR(100),
+    status VARCHAR(60) DEFAULT 'Pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 11. User Account Settings Table
+CREATE TABLE user_settings (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    preferences JSONB DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+

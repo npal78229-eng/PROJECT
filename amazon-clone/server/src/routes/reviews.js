@@ -2,10 +2,10 @@ const router = require('express').Router({ mergeParams: true });
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 
-// In-memory reviews store for resilient local testing
+// In-memory reviews store for resilient local testing (with photo & video support)
 const inMemoryReviews = new Map();
 
-// Sample starter reviews
+// Sample starter reviews with verified delivered product photos & videos
 inMemoryReviews.set(1, [
   {
     id: 101,
@@ -13,7 +13,16 @@ inMemoryReviews.set(1, [
     user_id: 2,
     user_name: 'Alex Johnson',
     rating: 5,
-    comment: 'Exceptional sound quality and the noise cancellation is astonishingly good for flights!',
+    comment: 'Delivered right on time! Attached unboxing photos and a video clip of the headphones. Exceptional sound quality and active noise cancellation!',
+    verified_delivery: true,
+    order_id: 948271,
+    photos: [
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+      'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&q=80',
+    ],
+    videos: [
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    ],
     created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
   },
   {
@@ -22,7 +31,13 @@ inMemoryReviews.set(1, [
     user_id: 3,
     user_name: 'Sarah Connor',
     rating: 5,
-    comment: 'Comfortable memory foam ear cups, lasts all week on a single battery charge.',
+    comment: 'Comfortable memory foam ear cups, lasts all week on a single battery charge. Sharing a real photo from my desk setup!',
+    verified_delivery: true,
+    order_id: 948105,
+    photos: [
+      'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80',
+    ],
+    videos: [],
     created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
   },
 ]);
@@ -52,12 +67,19 @@ router.get('/', async (req, res) => {
   res.json(reviews);
 });
 
-// 2. Post a new review for a product (Authenticated)
+// 2. Post a new review for a product (Supports Delivered Order Photos & Videos!)
 router.post('/', authenticate, async (req, res) => {
   const productId = parseInt(req.params.productId, 10);
   const userId = req.user.id;
   const userName = req.user.name || 'Verified Customer';
-  const { rating, comment } = req.body;
+  const {
+    rating,
+    comment,
+    photos = [],
+    videos = [],
+    order_id = null,
+    verified_delivery = true,
+  } = req.body;
 
   const numRating = parseInt(rating, 10);
   if (!numRating || numRating < 1 || numRating > 5) {
@@ -68,8 +90,10 @@ router.post('/', authenticate, async (req, res) => {
     return res.status(400).json({ message: 'Review comment cannot be empty' });
   }
 
+  const cleanPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  const cleanVideos = Array.isArray(videos) ? videos.filter(Boolean) : [];
+
   try {
-    // 1. Insert review into reviews table
     const reviewResult = await pool.query(
       `INSERT INTO reviews (product_id, user_id, rating, comment)
        VALUES ($1, $2, $3, $4)
@@ -77,7 +101,6 @@ router.post('/', authenticate, async (req, res) => {
       [productId, userId, numRating, comment.trim()]
     );
 
-    // 2. Recompute product average rating & total reviews
     const aggregate = await pool.query(
       `SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS total_reviews
        FROM reviews
@@ -88,7 +111,6 @@ router.post('/', authenticate, async (req, res) => {
     const avgRating = parseFloat(aggregate.rows[0].avg_rating);
     const totalReviews = parseInt(aggregate.rows[0].total_reviews, 10);
 
-    // 3. Update products table with recalculated aggregates
     await pool.query(
       `UPDATE products
        SET rating = $1, num_reviews = $2
@@ -97,7 +119,14 @@ router.post('/', authenticate, async (req, res) => {
     );
 
     return res.status(201).json({
-      review: { ...reviewResult.rows[0], user_name: userName },
+      review: {
+        ...reviewResult.rows[0],
+        user_name: userName,
+        photos: cleanPhotos,
+        videos: cleanVideos,
+        order_id,
+        verified_delivery: Boolean(verified_delivery),
+      },
       updatedProduct: {
         id: productId,
         rating: avgRating,
@@ -107,7 +136,6 @@ router.post('/', authenticate, async (req, res) => {
   } catch (err) {
     console.warn('Database review insertion fallback:', err.message);
 
-    // Fallback simulation
     const existing = inMemoryReviews.get(productId) || [];
     const newReview = {
       id: Math.floor(1000 + Math.random() * 9000),
@@ -116,6 +144,10 @@ router.post('/', authenticate, async (req, res) => {
       user_name: userName,
       rating: numRating,
       comment: comment.trim(),
+      photos: cleanPhotos,
+      videos: cleanVideos,
+      order_id,
+      verified_delivery: Boolean(verified_delivery),
       created_at: new Date().toISOString(),
     };
 

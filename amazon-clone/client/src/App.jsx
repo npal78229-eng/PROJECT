@@ -13,9 +13,15 @@ import Profile from './pages/Profile';
 import Orders from './pages/Orders';
 import SellerDashboard from './pages/SellerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import Wallet from './pages/Wallet';
+import Compare from './pages/Compare';
+import CustomerService from './pages/CustomerService';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatbotWidget from './components/ChatbotWidget';
 import { checkAuth } from './redux/authSlice';
 import { fetchCart } from './redux/cartSlice';
+import { fetchWallet } from './redux/walletSlice';
 
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
@@ -29,9 +35,10 @@ export default function App() {
   }, [dispatch]);
 
   useEffect(() => {
-    // Fetch user cart if authenticated
+    // Fetch user cart & Amazon Pay Wallet if authenticated
     if (isAuthenticated) {
       dispatch(fetchCart());
+      dispatch(fetchWallet());
     }
   }, [dispatch, isAuthenticated]);
 
@@ -42,6 +49,10 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/compare" element={<Compare />} />
+        <Route path="/customer-service" element={<CustomerService />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/settings" element={<Settings />} />
 
         {/* Protected Routes */}
         <Route
@@ -91,6 +102,9 @@ export default function App() {
           }
         />
       </Routes>
+
+      {/* Global Floating AI Assistant Chatbot Widget */}
+      <ChatbotWidget />
     </BrowserRouter>
   );
 }
